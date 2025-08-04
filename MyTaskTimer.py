@@ -2,8 +2,15 @@ import tkinter as tk
 from tkinter import messagebox
 import json
 import os
+import random
 
 DATA_FILE = "tasks_data.json"
+
+def generate_pastel_color():
+    r = random.randint(100, 200)
+    g = random.randint(100, 200)
+    b = random.randint(100, 200)
+    return f'#{r:02x}{g:02x}{b:02x}'
 
 class Task:
     def __init__(self, name, duration_minutes, remaining=None, running=False):
@@ -114,19 +121,20 @@ class PomodoroApp:
         self.save_tasks()
 
     def display_task(self, task):
-        frame = tk.Frame(self.task_frame, bd=2, relief=tk.RIDGE, bg="#3a3a3a")
+        bg_color = generate_pastel_color()
+        frame = tk.Frame(self.task_frame, bd=2, relief=tk.RIDGE, bg=bg_color)
         frame.pack(fill=tk.X, pady=5)
 
-        name_label = tk.Label(frame, text=task.name, bg="#3a3a3a", fg="white", font=("Arial", 10, "bold"))
+        name_label = tk.Label(frame, text=task.name, bg=bg_color, fg="white", font=("Arial", 10, "bold"))
         name_label.pack(side=tk.LEFT, padx=10)
 
         time_label = tk.Label(
             frame, text=self.format_time(task.remaining),
-            bg="#3a3a3a", fg="#FFA500", font=("Arial", 10, "bold")
+            bg=bg_color, fg="#FFA500", font=("Arial", 10, "bold")
         )
         time_label.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
 
-        button_frame = tk.Frame(frame, bg="#3a3a3a")
+        button_frame = tk.Frame(frame, bg=bg_color)
         button_frame.pack(side=tk.RIGHT, padx=5)
 
         start_btn = tk.Button(button_frame, text="▶", bg="#444", fg="white", width=3)
