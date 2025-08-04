@@ -1,0 +1,165 @@
+import tkinter as tk
+from tkinter import messagebox
+
+class Task:
+    def __init__(self, name, duration_minutes):
+        self.name = name
+        self.duration = duration_minutes * 60
+        self.remaining = self.duration
+        self.running = False
+        self.timer_id = None
+
+class PomodoroApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Pomodoro Timer App")
+        self.root.configure(bg="#2e2e2e")
+        self.root.geometry("600x400")
+        self.tasks = []
+
+        # Top bar with User Guide
+        top_frame = tk.Frame(root, bg="#2e2e2e")
+        top_frame.pack(fill=tk.X, padx=10, pady=5)
+
+        self.user_guide_btn = tk.Button(
+            top_frame, text="User Guide", command=self.show_user_guide,
+            bg="#444", fg="white", activebackground="#666", activeforeground="white"
+        )
+        self.user_guide_btn.pack(side=tk.RIGHT)
+
+        # Task display area
+        self.task_frame = tk.Frame(root, bg="#2e2e2e")
+        self.task_frame.pack(padx=10, pady=10, fill=tk.BOTH, expand=True)
+
+        self.no_task_label = tk.Label(
+            self.task_frame, text="No tasks for today",
+            bg="#2e2e2e", fg="white", font=("Arial", 14)
+        )
+        self.no_task_label.pack()
+
+        # Add Task input area
+        input_frame = tk.Frame(root, bg="#2e2e2e")
+        input_frame.pack(pady=10)
+
+        tk.Label(input_frame, text="Task Name:", bg="#2e2e2e", fg="white").pack(side=tk.LEFT, padx=5)
+        self.task_name_entry = tk.Entry(input_frame, width=20)
+        self.task_name_entry.pack(side=tk.LEFT, padx=5)
+
+        tk.Label(input_frame, text="Duration (min):", bg="#2e2e2e", fg="white").pack(side=tk.LEFT, padx=5)
+        self.task_duration_entry = tk.Entry(input_frame, width=5)
+        self.task_duration_entry.pack(side=tk.LEFT, padx=5)
+
+        self.add_button = tk.Button(
+            input_frame, text="➕ Add Task", command=self.add_task,
+            bg="#444", fg="white", activebackground="#666", activeforeground="white"
+        )
+        self.add_button.pack(side=tk.LEFT, padx=5)
+
+    def show_user_guide(self):
+        guide_text = (
+            "Pomodoro Timer App Guide:\n\n"
+            "1. Enter task name and duration in minutes, then click '➕ Add Task'.\n"
+            "2. Each task has buttons to ▶ Start, ⏸ Pause, ⟳ Reset, and ✖ Delete.\n"
+            "3. The timer runs in the background and alerts when time is up.\n"
+            "4. You can pause or reset the timer anytime.\n"
+            "5. Use the 'User Guide' button for help."
+        )
+        messagebox.showinfo("User Guide", guide_text)
+
+    def add_task(self):
+        name = self.task_name_entry.get().strip()
+        duration_text = self.task_duration_entry.get().strip()
+        if not name or not duration_text:
+            messagebox.showerror("Invalid Input", "Please enter both task name and duration.")
+            return
+        try:
+            minutes = int(duration_text)
+        except ValueError:
+            messagebox.showerror("Invalid Input", "Please enter a valid number for duration.")
+            return
+
+        task = Task(name, minutes)
+        self.tasks.append(task)
+        self.display_task(task)
+        self.no_task_label.pack_forget()
+        self.task_name_entry.delete(0, tk.END)
+        self.task_duration_entry.delete(0, tk.END)
+
+    def display_task(self, task):
+        frame = tk.Frame(self.task_frame, bd=2, relief=tk.RIDGE, bg="#3a3a3a")
+        frame.pack(fill=tk.X, pady=5)
+
+        name_label = tk.Label(frame, text=task.name, bg="#3a3a3a", fg="white", font=("Arial", 10, "bold"))
+        name_label.pack(side=tk.LEFT, padx=10)
+
+        time_label = tk.Label(
+            frame, text=self.format_time(task.remaining),
+            bg="#3a3a3a", fg="#FFA500", font=("Arial", 10, "bold")
+        )
+        time_label.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
+
+        button_frame = tk.Frame(frame, bg="#3a3a3a")
+        button_frame.pack(side=tk.RIGHT, padx=5)
+
+        start_btn = tk.Button(button_frame, text="▶", bg="#444", fg="white", width=3)
+        start_btn.pack(side=tk.LEFT)
+        start_btn.config(command=lambda: self.start_timer(task, time_label, start_btn))
+
+        pause_btn = tk.Button(button_frame, text="⏸", command=lambda: self.pause_timer(task, start_btn),
+                              bg="#444", fg="white", width=3)
+        pause_btn.pack(side=tk.LEFT)
+
+        reset_btn = tk.Button(button_frame, text="⟳", command=lambda: self.reset_timer(task, time_label, start_btn),
+                              bg="#444", fg="white", width=3)
+        reset_btn.pack(side=tk.LEFT)
+
+        delete_btn = tk.Button(button_frame, text="✖", command=lambda: self.delete_task(task, frame),
+                               bg="#444", fg="white", width=3)
+        delete_btn.pack(side=tk.LEFT)
+
+    def format_time(self, seconds):
+        mins = seconds // 60
+        secs = seconds % 60
+        return f"{mins:02}:{secs:02}"
+
+    def start_timer(self, task, label, start_btn):
+        if not task.running and task.remaining > 0:
+            task.running = True
+            start_btn.config(relief=tk.SUNKEN)
+            self.update_timer(task, label, start_btn)
+
+    def update_timer(self, task, label, start_btn):
+        if task.remaining > 0 and task.running:
+            task.remaining -= 1
+            label.config(text=self.format_time(task.remaining))
+            task.timer_id = self.root.after(1000, lambda: self.update_timer(task, label, start_btn))
+        else:
+            task.running = False
+            start_btn.config(relief=tk.RAISED)
+            if task.remaining == 0:
+                messagebox.showinfo("Time's up!", f"Task '{task.name}' is complete!")
+
+    def pause_timer(self, task, start_btn):
+        if task.running:
+            task.running = False
+            if start_btn:
+                start_btn.config(relief=tk.RAISED)
+            if task.timer_id:
+                self.root.after_cancel(task.timer_id)
+
+    def reset_timer(self, task, label, start_btn):
+        self.pause_timer(task, start_btn)
+        task.remaining = task.duration
+        label.config(text=self.format_time(task.remaining))
+
+    def delete_task(self, task, frame):
+        self.pause_timer(task, None)
+        self.tasks.remove(task)
+        frame.destroy()
+        if not self.tasks:
+            self.no_task_label.pack()
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = PomodoroApp(root)
+    root.mainloop()
