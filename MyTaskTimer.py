@@ -1,13 +1,25 @@
 import tkinter as tk
 from tkinter import messagebox
+import json
+import os
+
+DATA_FILE = "tasks_data.json"
 
 class Task:
-    def __init__(self, name, duration_minutes):
+    def __init__(self, name, duration_minutes, remaining=None, running=False):
         self.name = name
         self.duration = duration_minutes * 60
-        self.remaining = self.duration
-        self.running = False
+        self.remaining = remaining if remaining is not None else self.duration
+        self.running = running
         self.timer_id = None
+
+    def to_dict(self):
+        return {
+            "name": self.name,
+            "duration_minutes": self.duration // 60,
+            "remaining": self.remaining,
+            "running": self.running
+        }
 
 class PomodoroApp:
     def __init__(self, root):
@@ -17,7 +29,6 @@ class PomodoroApp:
         self.root.geometry("600x400")
         self.tasks = []
 
-        # Top bar with User Guide
         top_frame = tk.Frame(root, bg="#2e2e2e")
         top_frame.pack(fill=tk.X, padx=10, pady=5)
 
@@ -27,7 +38,6 @@ class PomodoroApp:
         )
         self.user_guide_btn.pack(side=tk.RIGHT)
 
-        # Task display area
         self.task_frame = tk.Frame(root, bg="#2e2e2e")
         self.task_frame.pack(padx=10, pady=10, fill=tk.BOTH, expand=True)
 
@@ -37,7 +47,6 @@ class PomodoroApp:
         )
         self.no_task_label.pack()
 
-        # Add Task input area
         input_frame = tk.Frame(root, bg="#2e2e2e")
         input_frame.pack(pady=10)
 
@@ -55,6 +64,8 @@ class PomodoroApp:
         )
         self.add_button.pack(side=tk.LEFT, padx=5)
 
+        self.load_tasks()
+
     def show_user_guide(self):
         guide_text = (
             "Pomodoro Timer App Guide:\n\n"
@@ -65,6 +76,22 @@ class PomodoroApp:
             "5. Use the 'User Guide' button for help."
         )
         messagebox.showinfo("User Guide", guide_text)
+
+    def save_tasks(self):
+        data = [task.to_dict() for task in self.tasks]
+        with open(DATA_FILE, "w") as f:
+            json.dump(data, f)
+
+    def load_tasks(self):
+        if os.path.exists(DATA_FILE):
+            with open(DATA_FILE, "r") as f:
+                data = json.load(f)
+                for item in data:
+                    task = Task(item["name"], item["duration_minutes"], item["remaining"], item["running"])
+                    self.tasks.append(task)
+                    self.display_task(task)
+                if self.tasks:
+                    self.no_task_label.pack_forget()
 
     def add_task(self):
         name = self.task_name_entry.get().strip()
@@ -84,6 +111,7 @@ class PomodoroApp:
         self.no_task_label.pack_forget()
         self.task_name_entry.delete(0, tk.END)
         self.task_duration_entry.delete(0, tk.END)
+        self.save_tasks()
 
     def display_task(self, task):
         frame = tk.Frame(self.task_frame, bd=2, relief=tk.RIDGE, bg="#3a3a3a")
@@ -136,6 +164,7 @@ class PomodoroApp:
         else:
             task.running = False
             start_btn.config(relief=tk.RAISED)
+            self.save_tasks()
             if task.remaining == 0:
                 messagebox.showinfo("Time's up!", f"Task '{task.name}' is complete!")
 
@@ -146,16 +175,19 @@ class PomodoroApp:
                 start_btn.config(relief=tk.RAISED)
             if task.timer_id:
                 self.root.after_cancel(task.timer_id)
+            self.save_tasks()
 
     def reset_timer(self, task, label, start_btn):
         self.pause_timer(task, start_btn)
         task.remaining = task.duration
         label.config(text=self.format_time(task.remaining))
+        self.save_tasks()
 
     def delete_task(self, task, frame):
         self.pause_timer(task, None)
         self.tasks.remove(task)
         frame.destroy()
+        self.save_tasks()
         if not self.tasks:
             self.no_task_label.pack()
 
