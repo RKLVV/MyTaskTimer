@@ -7,9 +7,9 @@ import random
 DATA_FILE = "tasks_data.json"
 
 def generate_pastel_color():
-    r = random.randint(100, 200)
-    g = random.randint(100, 200)
-    b = random.randint(100, 200)
+    r = random.randint(250, 255)
+    g = random.randint(179, 241)
+    b = random.randint(71, 215)
     return f'#{r:02x}{g:02x}{b:02x}'
 
 class Task:
@@ -32,42 +32,43 @@ class PomodoroApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Pomodoro Timer App")
-        self.root.configure(bg="#2e2e2e")
-        self.root.geometry("600x400")
+        theme_bg="#36404A"
+        self.root.configure(bg=theme_bg)
+        self.root.geometry("400x750")
         self.tasks = []
 
-        top_frame = tk.Frame(root, bg="#2e2e2e")
+        top_frame = tk.Frame(root, bg=theme_bg)
         top_frame.pack(fill=tk.X, padx=10, pady=5)
 
         self.user_guide_btn = tk.Button(
-            top_frame, text="User Guide", command=self.show_user_guide,
-            bg="#444", fg="white", activebackground="#666", activeforeground="white"
+            top_frame, text="\u2139", command=self.show_user_guide,
+            bg=theme_bg, fg="white", activebackground="#666", activeforeground="white"
         )
         self.user_guide_btn.pack(side=tk.RIGHT)
 
-        self.task_frame = tk.Frame(root, bg="#2e2e2e")
+        self.task_frame = tk.Frame(root, bg=theme_bg)
         self.task_frame.pack(padx=10, pady=10, fill=tk.BOTH, expand=True)
 
         self.no_task_label = tk.Label(
             self.task_frame, text="No tasks for today",
-            bg="#2e2e2e", fg="white", font=("Arial", 14)
+            bg=theme_bg, fg="white", font=("Arial", 14)
         )
         self.no_task_label.pack()
 
-        input_frame = tk.Frame(root, bg="#2e2e2e")
+        input_frame = tk.Frame(root, bg=theme_bg)
         input_frame.pack(pady=10)
 
-        tk.Label(input_frame, text="Task Name:", bg="#2e2e2e", fg="white").pack(side=tk.LEFT, padx=5)
+        tk.Label(input_frame, text="Task:", bg=theme_bg, fg="white").pack(side=tk.LEFT, padx=5)
         self.task_name_entry = tk.Entry(input_frame, width=20)
         self.task_name_entry.pack(side=tk.LEFT, padx=5)
 
-        tk.Label(input_frame, text="Duration (min):", bg="#2e2e2e", fg="white").pack(side=tk.LEFT, padx=5)
+        tk.Label(input_frame, text="Duration (min):", bg=theme_bg, fg="white").pack(side=tk.LEFT, padx=5)
         self.task_duration_entry = tk.Entry(input_frame, width=5)
         self.task_duration_entry.pack(side=tk.LEFT, padx=5)
 
         self.add_button = tk.Button(
-            input_frame, text="➕ Add Task", command=self.add_task,
-            bg="#444", fg="white", activebackground="#666", activeforeground="white"
+            input_frame, text="➕", command=self.add_task,
+            bg=theme_bg, fg="white", activebackground="#666", activeforeground="white"
         )
         self.add_button.pack(side=tk.LEFT, padx=5)
 
@@ -76,11 +77,11 @@ class PomodoroApp:
     def show_user_guide(self):
         guide_text = (
             "Pomodoro Timer App Guide:\n\n"
-            "1. Enter task name and duration in minutes, then click '➕ Add Task'.\n"
+            "1. Enter task name and duration in minutes, then click '➕'.\n"
             "2. Each task has buttons to ▶ Start, ⏸ Pause, ⟳ Reset, and ✖ Delete.\n"
             "3. The timer runs in the background and alerts when time is up.\n"
             "4. You can pause or reset the timer anytime.\n"
-            "5. Use the 'User Guide' button for help."
+            "5. Use the 'i' button for help."
         )
         messagebox.showinfo("User Guide", guide_text)
 
@@ -122,35 +123,38 @@ class PomodoroApp:
 
     def display_task(self, task):
         bg_color = generate_pastel_color()
-        frame = tk.Frame(self.task_frame, bd=2, relief=tk.RIDGE, bg=bg_color)
+        #bg_color = "#fa8b50"
+        bg_btn = "#4A4A4A"
+        fg_btn = "#F7D9BC"
+        frame = tk.Frame(self.task_frame, bd=2, relief=tk.RAISED, bg=bg_color)
         frame.pack(fill=tk.X, pady=5)
 
-        name_label = tk.Label(frame, text=task.name, bg=bg_color, fg="white", font=("Arial", 10, "bold"))
+        name_label = tk.Label(frame, text=task.name, bg=bg_color, fg="#0a0014", font=("Roboto", 13, "bold"))
         name_label.pack(side=tk.LEFT, padx=10)
 
         time_label = tk.Label(
             frame, text=self.format_time(task.remaining),
-            bg=bg_color, fg="#FFA500", font=("Arial", 10, "bold")
+            bg=bg_color, fg="#0a0014", font=("Monoid", 14, "bold")
         )
         time_label.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
 
         button_frame = tk.Frame(frame, bg=bg_color)
         button_frame.pack(side=tk.RIGHT, padx=5)
 
-        start_btn = tk.Button(button_frame, text="▶", bg="#444", fg="white", width=3)
+        start_btn = tk.Button(button_frame, text="\u23F5", bg=bg_btn, fg=fg_btn, width=3)
         start_btn.pack(side=tk.LEFT)
         start_btn.config(command=lambda: self.start_timer(task, time_label, start_btn))
 
-        pause_btn = tk.Button(button_frame, text="⏸", command=lambda: self.pause_timer(task, start_btn),
-                              bg="#444", fg="white", width=3)
+        pause_btn = tk.Button(button_frame, text="\u23F8", command=lambda: self.pause_timer(task, start_btn),
+                              bg=bg_btn, fg=fg_btn, width=3)
         pause_btn.pack(side=tk.LEFT)
 
         reset_btn = tk.Button(button_frame, text="⟳", command=lambda: self.reset_timer(task, time_label, start_btn),
-                              bg="#444", fg="white", width=3)
+                              bg=bg_btn, fg=fg_btn, width=3)
         reset_btn.pack(side=tk.LEFT)
 
         delete_btn = tk.Button(button_frame, text="✖", command=lambda: self.delete_task(task, frame),
-                               bg="#444", fg="white", width=3)
+                               bg=bg_btn, fg="#ff9f9f", width=3)
         delete_btn.pack(side=tk.LEFT)
 
     def format_time(self, seconds):
@@ -161,7 +165,7 @@ class PomodoroApp:
     def start_timer(self, task, label, start_btn):
         if not task.running and task.remaining > 0:
             task.running = True
-            start_btn.config(relief=tk.SUNKEN)
+            start_btn.config(relief=tk.SUNKEN, fg="#80EF80")
             self.update_timer(task, label, start_btn)
 
     def update_timer(self, task, label, start_btn):
@@ -180,7 +184,7 @@ class PomodoroApp:
         if task.running:
             task.running = False
             if start_btn:
-                start_btn.config(relief=tk.RAISED)
+                start_btn.config(relief=tk.RAISED, fg="#F7D9BC")
             if task.timer_id:
                 self.root.after_cancel(task.timer_id)
             self.save_tasks()
